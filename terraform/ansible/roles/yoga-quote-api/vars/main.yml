@@ -1,0 +1,3 @@
+---
+gitlab_deploy_user: '{{ vault_gitlab_deploy_user }}'
+gitlab_deploy_token: '{{ vault_gitlab_deploy_token }}'

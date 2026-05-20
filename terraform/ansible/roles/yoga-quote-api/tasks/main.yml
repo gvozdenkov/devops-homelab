@@ -1,0 +1,101 @@
+- name: Load encrypted vault variables
+  ansible.builtin.include_vars:
+    file: vault.yml
+
+- name: Ensure rootless directory exists
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.file:
+    path: '/home/{{ podman_rootless_user }}/.config/{{ item.path }}'
+    state: directory
+    mode: '0755'
+  loop:
+    - { path: 'containers', mode: '0700' } # /containers
+    - { path: 'containers/systemd', mode: '0755' } # /containers/systemd
+    - { path: 'systemd/user/podman-auto-update.timer.d', mode: '0755' }
+
+- name: Login to GitLab registry for rootless user using deploy token
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.shell: |
+    set -e
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    printf '%s' '{{ gitlab_deploy_token }}' | podman login \
+      --username '{{ gitlab_deploy_user }}' \
+      --password-stdin \
+      --authfile /home/{{ podman_rootless_user }}/.config/containers/auth.json \
+      registry.gitlab.com
+  no_log: true
+
+- name: Install yoga quote api quadlet
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.copy:
+    dest: '/home/{{ podman_rootless_user }}/.config/containers/systemd/yoga-quote-api.container'
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Yoga Quote API
+      After=network-online.target
+      Wants=network-online.target
+
+      [Container]
+      Image={{ yoga_quote_api_image }}
+      ContainerName=quote-yoga-api
+      PublishPort={{ yoga_quote_api_host_port }}:3000
+      AutoUpdate=registry
+      Pull=always
+
+      [Service]
+      Restart=always
+      TimeoutStartSec=900
+
+      [Install]
+      WantedBy=default.target
+  notify: Reload user systemd
+
+- name: Reload user systemd now to generate yoga-quote-api.service from yoga-quote-api.container
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.systemd:
+    scope: user
+    daemon_reload: true
+
+- name: Enable and start podman auto update timer
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.systemd:
+    name: podman-auto-update.timer
+    scope: user
+    enabled: true
+    state: started
+
+- name: Override podman auto update timer to every 10 minutes
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.copy:
+    dest: '/home/{{ podman_rootless_user }}/.config/systemd/user/podman-auto-update.timer.d/override.conf'
+    mode: '0644'
+    content: |
+      [Timer]
+      OnCalendar=
+      OnCalendar=*:0/10
+  notify: Reload user systemd
+
+# - name: Start yoga quote api generated service
+#   become: true
+#   become_user: '{{ podman_rootless_user }}'
+#   ansible.builtin.systemd:
+#     name: yoga-quote-api.service
+#     scope: user
+#     enabled: true
+#     state: started
+
+- name: Start yoga quote api generated service
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.shell: |
+    set -e
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    systemctl --user start yoga-quote-api.service
+  changed_when: true
