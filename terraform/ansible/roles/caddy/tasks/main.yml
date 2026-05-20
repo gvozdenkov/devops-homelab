@@ -9,6 +9,7 @@
   loop:
     - '{{ caddy_config_dir }}'
     - '{{ caddy_data_dir }}'
+    - '/home/{{ podman_rootless_user }}/.config/containers/systemd'
 
 - name: Build basic Caddyfile with reverse proxy sites
   become: true
@@ -22,23 +23,55 @@
         admin off
       }
       {% for site in caddy_sites %}
-      {{ site.name }} {
-          reverse_proxy 127.0.0.1:{{ site.port }}
+      http://{{ site.name }} {
+          reverse_proxy host.containers.internal:{{ site.port }}
       }
       {% endfor %}
-  notify: Restart caddy container
+  notify: Restart caddy service
 
-- name: Run Caddy container with Podman
+- name: Install Caddy quadlet
   become: true
   become_user: '{{ podman_rootless_user }}'
-  containers.podman.podman_container:
-    name: '{{ caddy_container_name }}'
-    image: '{{ caddy_image }}'
+  ansible.builtin.copy:
+    dest: '/home/{{ podman_rootless_user }}/.config/containers/systemd/caddy.container'
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Caddy reverse proxy
+      After=network-online.target
+      Wants=network-online.target
+
+      [Container]
+      Image={{ caddy_image }}
+      ContainerName={{ caddy_container_name }}
+      PublishPort={{ caddy_port_http }}:80
+      PublishPort={{ caddy_port_https }}:443
+      Volume={{ caddy_config_file }}:/etc/caddy/Caddyfile:Z
+      Volume={{ caddy_data_dir }}:/data:Z
+      AutoUpdate=registry
+
+      [Service]
+      Restart=always
+      TimeoutStartSec=900
+
+      [Install]
+      WantedBy=default.target
+  notify: Reload user systemd
+
+- name: Enable podman auto update timer for rootless user
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.systemd:
+    name: podman-auto-update.timer
+    scope: user
+    enabled: true
     state: started
-    restart_policy: '{{ caddy_restart_policy }}'
-    ports:
-      - '{{ caddy_port_http }}:80'
-      - '{{ caddy_port_https }}:443'
-    volumes:
-      - '{{ caddy_config_file }}:/etc/caddy/Caddyfile:Z'
-      - '{{ caddy_data_dir }}:/data:Z'
+
+- name: Enable and start caddy service
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.systemd:
+    name: caddy.service
+    scope: user
+    enabled: true
+    state: started

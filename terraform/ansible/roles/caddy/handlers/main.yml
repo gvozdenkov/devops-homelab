@@ -1,7 +1,15 @@
 ---
-- name: Restart caddy container
-  containers.podman.podman_container:
-    name: '{{ caddy_container_name }}'
-    image: '{{ caddy_image }}'
-    state: started
-    restart: true
+- name: Reload user systemd
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: user
+
+- name: Restart caddy service
+  become: true
+  become_user: '{{ podman_rootless_user }}'
+  ansible.builtin.systemd:
+    name: caddy.service
+    scope: user
+    state: restarted
