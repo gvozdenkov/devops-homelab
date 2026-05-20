@@ -2,14 +2,14 @@
 - name: Install Podman and related packages on Debian/Ubuntu
   become: true
   ansible.builtin.apt:
-    name: '{{ podman_extra_packages }}'
+    name: "{{ podman_extra_packages }}"
     state: present
     update_cache: true
 
 - name: Ensure rootless user exists
   become: true
   ansible.builtin.user:
-    name: '{{ podman_rootless_user }}'
+    name: "{{ podman_rootless_user }}"
     state: present
     create_home: true
     shell: /usr/sbin/nologin
@@ -24,18 +24,18 @@
   become: true
   ansible.builtin.lineinfile:
     path: /etc/subuid
-    line: '{{ podman_rootless_user }}:100000:65536'
+    line: "{{ podman_rootless_user }}:100000:65536"
     create: true
-    mode: '0644'
+    mode: "0644"
   notify: Reload systemd
 
 - name: Configure subgids for rootless operation
   become: true
   ansible.builtin.lineinfile:
     path: /etc/subgid
-    line: '{{ podman_rootless_user }}:100000:65536'
+    line: "{{ podman_rootless_user }}:100000:65536"
     create: true
-    mode: '0644'
+    mode: "0644"
   notify: Reload systemd
 
 - name: Permit rootless containers to bind to ports 80 and 443
