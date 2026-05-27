@@ -5,7 +5,7 @@
 # Check canoncial for official pi ubuntu version https://ubuntu.com/download/raspberry-pi
 
 if [ $# -ne 2 ]; then
-    echo "Usage: $0 <device> <partition"
+    echo "Usage: <device> <partition>"
     echo "Example: /dev/mmcblk0 1"
     echo "Example: /dev/sdb 1"
     exit 1

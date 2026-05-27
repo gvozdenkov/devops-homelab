@@ -5,12 +5,10 @@
 ${node.hostname} ansible_host=${split("/", node.static_ip)[0]} mac_address=${node.mac_address}
 %{ endfor ~}
 
-[homelab]
-pi5 ansible_host=95.31.48.83 ansible_user=ansible ansible_port=55022 ansible_private_key_file=/workspaces/devops-home-lab/ansible_homelab ansible_ssh_common_args='-o IdentitiesOnly=yes'
-
 [pi:vars]
 ansible_user=ansible
 ansible_python_interpreter=/usr/bin/python3
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_private_key_file=/workspaces/devops-home-lab/ansible_homelab
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes'
 ansible_become_method=sudo
-podman_rootless_user=ansible
+podman_rootless_user=containers

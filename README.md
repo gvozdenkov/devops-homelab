@@ -80,4 +80,6 @@ sudo -u containers -H sh -lc 'export XDG_RUNTIME_DIR=/run/user/$(id -u);cd /home
 
 # Check podman conatiners
 sudo -u containers -H sh -lc 'cd /home/containers && podman ps -a'
+
+sudo -u containers -H sh -lc 'export XDG_RUNTIME_DIR=/run/user/$(id -u); journalctl --user -u caddy.service -e --no-full --no-pager -o cat'
 ```
