@@ -4,10 +4,10 @@ To learn and test k8s, gitlab ci, IaC and gitOps principals on raspberry pi home
 
 ## Architecture
 
-For the start I use 2 Raspberry Pi to constract bare metal kubernetes cluster:
+For the start I use 2 Raspberry Pi to constract bare metal k3s kubernetes cluster:
 
-1. Raspberry Pi 3B+ 1Gb for master node (control plane)
-2. Rspberry Pi 5 8Gb for worker node
+1. Raspberry Pi 5 8Gb for master node (control plane)
+2. Raspberry Pi 3B+ 1Gb for worker node
 
 ![2 pies on the board](README_img/pies.jpg)
 
