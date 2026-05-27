@@ -3,17 +3,15 @@
 
 # RAID arrays: list of { devices: [], level, md_number }
 pi5_raid_arrays:
-    # 1.5+1.5Tb drives
-  - devices: ["/dev/sdc", "/dev/sdd"]
+  - devices: ["/dev/sda", "/dev/sdb"]
     level: 1
     md_number: 0
-    # 3+4Tb drives
-  - devices: ["/dev/sda", "/dev/sdb"]
+  - devices: ["/dev/sdc", "/dev/sdd"]
     level: 1
     md_number: 1
 
 # LVM: VG per array
-pi5_vgs:
+pi5_vg_names:
   - name: "vg_raid0"
     device: "/dev/md0"
   - name: "vg_raid1"
