@@ -11,8 +11,8 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-VERSION=24.04.3
-IMAGE=ubuntu-24.04.3-preinstalled-server-arm64+raspi.img
+VERSION=24.04.4
+IMAGE=ubuntu-24.04.4-preinstalled-server-arm64+raspi.img
 DEVICE=$1
 BOOT_PARTITION=$2
 
