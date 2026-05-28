@@ -1,0 +1,7 @@
+---
+- name: Base OS setup for all Pi homelab nodes
+  hosts: pi3
+  become: true
+  gather_facts: false
+  roles:
+    - role: base_os

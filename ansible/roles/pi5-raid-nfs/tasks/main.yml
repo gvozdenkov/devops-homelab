@@ -7,7 +7,7 @@
       - nfs-kernel-server
       - hdparm
     state: present
-    update_cache: yes
+    update_cache: true
   tags: packages
 
 - name: Configure RAID arrays

@@ -1,9 +1,0 @@
----
-- name: Setup podman & caddy
-  hosts: pi5
-  gather_facts: false
-  # No 'vars' section here!
-  # Let the role use the values from roles/pi5-raid-nfs/defaults/main.yml
-  roles:
-    - podman
-    - caddy

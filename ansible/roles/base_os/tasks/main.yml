@@ -1,0 +1,11 @@
+---
+- name: Upgrade packages after clean os install
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: full
+    autoremove: true
+    autoclean: true
+  tags:
+    - base_os
+    - apt
+    - upgrade
