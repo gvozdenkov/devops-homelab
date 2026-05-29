@@ -1,19 +1,33 @@
 # DevOps Home Lab
 
-To learn and test k8s, gitlab ci, IaC and gitOps principals on raspberry pi home cluster
+To learn and test k8s, gitlab ci, IaC and gitOps principals on raspberry pi home cluster.
+
+I love automation a lot. Why do things manually when "robots" can do it for me? :robot: So I desided to build my own "bare metal" :metal: homelab so I could touch with my hands hardware where I will train my automation skills. I thinks it's cool to see real device and know that in this moment my automation do cool stuff inside it.
 
 ## Architecture
 
 For the start I use 2 Raspberry Pi to constract bare metal k3s kubernetes cluster:
 
-1. Raspberry Pi 5 8Gb for master node (control plane)
-2. Raspberry Pi 3B+ 1Gb for worker node
+1. Raspberry Pi 5 8Gb for control plane
+2. Raspberry Pi 3B+ 1Gb for compute node
 
 ![2 pies on the board](README_img/pies.jpg)
 
+I also bought a heatsink for the Pi5 and expansion cards for easy insertion of flash cards (this was a right idea, because I reinstall os a lot). And I bought a mikrotik switch (disassebled on the photo). I wanted to connect my homelab to my home router via ethernet cable, not wi-fi.
+
+![pies with upgrade and disassembled switch on the board](README_img/pis-and-switch-on-board.avif)
+
+And finally I insert all my pi and disassembled switch to the rack case for easy manage on the table (and for cool look, of course :sunglasses:)
+
+![pies and switch mounted in rack](README_img/pis-in-case.avif)
+
+This is the final look of my simple raspberry homelab with usb storage. I desided to play with simple usb dock station rather then expansive NAS for begining. To play with `mdadm` to create software raid 1 and `lvm` for smart storage managment.
+
+![rack and storage homelab](README_img/pi-case-and-storage.avif)
+
 ## Use devcontainers for dev:)
 
-With `devpod`
+With `devpod` to create full environment to manage homelab with no need to install something on host machine.
 
 ```sh
 # Clean fash build
@@ -43,24 +57,33 @@ Terraform in this context acts as an orchestration and configuration management 
 If some `pi` node breaks, or sd card breaks, or add new node:
 
 1. Go to `terraform/variables.tf`/`terraform.tfvars` and check/add new node setup params (mac address, os, tags, etc.)
-2. `terraform apply` new changes. This will generate cloud-init config files and script to write os on SD card for new node in `/terraform/raspberry-pi`
-3. Insert SD card and execute `/terraform/raspberry-pi/xxx-prepare-os.sh` script to write os to SD card
+2. `terraform apply` new changes. This will generate cloud-init config files and script to write os on SD card for new node in `raspberry-pi/`
+3. Insert SD card and execute `raspberry-pi/xxx-prepare-os.sh` script to write os to SD card
 4. Insert SD card to `pi` and this should work
+5. Run dedicated Ansible playbooks to setup new node
 
 ### Ansible
 
 ```sh
-cd terraform/ansible/
+cd ansible/
 
-ansible-playbook -i inventory.ini playbook.yml
+# Run generic playbook
+ansible-playbook playbooks/playbook.yml
+
+# Run playbook for specific host
+ansible-playbook playbooks/playbook.yml --limit pi5
+# pi5 and pi3
+ansible-playbook playbooks/playbook.yml --limit 'pi5,pi3'
+# all pi except pi3
+ansible-playbook playbooks/playbook.yml --limit 'pi:!pi3'
 
 # use tags to run only specific tasks
-ansible-playbook -i inventory.ini playbook.yml --tags lvm
-ansible-playbook -i inventory.ini playbook.yml --tags lvm,raid
-ansible-playbook -i inventory.ini playbook.yml --skip-tags packages
+ansible-playbook playbooks/playbook.yml --tags lvm
+ansible-playbook playbooks/playbook.yml --tags lvm,raid
+ansible-playbook playbooks/playbook.yml --skip-tags packages
 
 # List available tags
-ansible-playbook playbook.yml --list-tags
+ansible-playbook playbooks/playbook.yml --list-tags
 ```
 
 ## Debug
