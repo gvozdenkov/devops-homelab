@@ -1,6 +1,7 @@
+# Basic setup after clean os install
 ---
 - name: Base OS setup for all Pi homelab nodes
-  hosts: pi3
+  hosts: pi
   become: true
   gather_facts: false
   roles:
