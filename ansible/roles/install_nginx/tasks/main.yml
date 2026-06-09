@@ -1,0 +1,54 @@
+---
+- name: Download the armored Nginx GPG key
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    state: present
+    package:
+      - curl
+      - gnupg2
+      - ca-certificates
+      - lsb-release
+      - ubuntu-keyring
+  tags:
+    - apt
+    - prepare
+
+- name: Download and dearmor Nginx signing key
+  block:
+    - name: Download the armored Nginx GPG key
+      ansible.builtin.uri:
+        url: https://nginx.org/keys/nginx_signing.key
+        dest: /tmp/nginx_signing.key
+        mode: '644'
+        creates: /usr/share/keyrings/nginx-archive-keyring.gpg
+
+    - name: Dearmor the GPG key into the trusted keyrings directory
+      become: true
+      ansible.builtin.command:
+        cmd: gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg /tmp/nginx_signing.key
+        creates: /usr/share/keyrings/nginx-archive-keyring.gpg
+
+  always:
+    - name: Clean up the temporary armored key file
+      ansible.builtin.file:
+        path: /tmp/nginx_signing.key
+        state: absent
+
+- name: Add Nginx apt repo
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/ubuntu {{ ansible_facts['distribution_release'] }} nginx"
+    state: present
+    filename: nginx
+    update_cache: true
+
+- name: Install Nginx
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    state: present
+    package:
+      - nginx
+  tags:
+    - install
